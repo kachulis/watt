@@ -1,4 +1,4 @@
 {
-  "say_hello.lines": ["Watt","Watt","Watt"],
+  "say_hello.lines": ["Hello Watt","Hello Watt","Hello Watt"],
   "say_hello.compress": true
 }
