@@ -9,7 +9,7 @@ jobs:
           pip install -r requirements.txt
           wget -q https://github.com/broadinstitute/cromwell/releases/download/84/cromwell-84.jar
       - name: Run tests which should pass
-        run:   python watt.py -e cromwell-84.jar -t simple compress_file expect_fail ignore_line ignore_line_compress -p $(nproc)
+        run:   python watt.py -e cromwell-84.jar -t simple compress_file expect_fail ignore_lines ignore_lines_compress -p $(nproc)
       - name: Run tests which should fail
         run: |
           echo "THE FOLLOWING TESTS SHOULD ALL FAIL"
