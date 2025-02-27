@@ -172,7 +172,7 @@ class CompareOutputs:
         blob = bucket.blob(blob_str)
         blob.download_to_filename(tmp_file_name)
 
-    def match(self, x, y, line_skip_regex_str) -> int:
+    def match(self, x, y, line_skip_regex_str: str = None) -> int:
         """
         Performs a comparison against two values from an output JSON. Uses recursion to handle nested Array types, and
         infers File types from attempting to read strings as file first. If that fails, then compare raw values.
@@ -212,8 +212,8 @@ class CompareOutputs:
                     with gzip.open(x, 'r') as x_file, gzip.open(y, 'r') as y_file:
                         if line_skip_regex_str:
                             line_skip_regex = re.compile(line_skip_regex_str)
-                            x_contents = [line for line in x_file if not line_skip_regex.match(line.decode())]
-                            y_contents = [line for line in y_file if not line_skip_regex.match(line.decode())]
+                            x_contents = [line for line in x_file if not line_skip_regex.search(line.decode())]
+                            y_contents = [line for line in y_file if not line_skip_regex.search(line.decode())]
                         else:
                             x_contents = x_file.read()
                             y_contents = y_file.read()
@@ -225,8 +225,8 @@ class CompareOutputs:
                     if line_skip_regex_str:
                         line_skip_regex = re.compile(line_skip_regex_str)
                         with open(x, 'r') as x_file, open(y, 'r') as y_file:
-                            x_contents = [line for line in x_file if not line_skip_regex.match(line)]
-                            y_contents = [line for line in y_file if not line_skip_regex.match(line)]
+                            x_contents = [line for line in x_file if not line_skip_regex.search(line)]
+                            y_contents = [line for line in y_file if not line_skip_regex.search(line)]
                             if x_contents == y_contents:
                                 return ComparisonResult.Match
                             else:

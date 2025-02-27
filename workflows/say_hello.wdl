@@ -24,7 +24,7 @@ task Announce {
     }
 
     command <<<
-        for line in ~{sep= " " lines}
+        for line in "~{sep= '" "' lines}"
         do
             echo $line >> announcement.txt
         done

@@ -1,0 +1,6 @@
+{
+  "say_hello.announcement": {
+    "file": "tests/say_hello/ignore_lines_compress_fail_test/announcement.txt.gz",
+    "line_skip_regex": "shouldn't|won't"
+  }
+}
