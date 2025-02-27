@@ -13,6 +13,12 @@ say_hello:
     compress_file:
       test_inputs: "/tests/say_hello/compress_file_test/test_inputs.json"
       expected_outputs: "/tests/say_hello/compress_file_test/expected_outputs.json"
+    ignore_lines:
+      test_inputs: "/tests/say_hello/ignore_lines_test/test_inputs.json"
+      expected_outputs: "/tests/say_hello/ignore_lines_test/expected_outputs.json"
+    ignore_lines_compress:
+      test_inputs: "/tests/say_hello/ignore_lines_compress_test/test_inputs.json"
+      expected_outputs: "/tests/say_hello/ignore_lines_compress_test/expected_outputs.json"
 extract_stat:
   path: "/workflows/extract_stat.wdl"
   tests:

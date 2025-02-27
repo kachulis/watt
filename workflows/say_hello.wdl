@@ -2,15 +2,13 @@ version 1.0
 
 workflow say_hello {
     input {
-        String name
-        Int num_times
+        Array[String] lines
         Boolean compress
     }
 
     call Announce {
         input:
-            name=name,
-            num_times=num_times,
+            lines=lines,
             compress=compress
     }
 
@@ -21,15 +19,14 @@ workflow say_hello {
 
 task Announce {
     input {
-        String name
-        Int num_times
+        Array[String] lines
         Boolean compress
     }
 
     command <<<
-        for i in $(seq 1 ~{num_times})
+        for line in ~{sep= " " lines}
         do
-            echo "Hello ~{name}" >> announcement.txt
+            echo $line >> announcement.txt
         done
 
         if ~{compress}; then

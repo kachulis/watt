@@ -1,5 +1,4 @@
 {
-  "say_hello.name": "Watt",
-  "say_hello.num_times": 3,
+  "say_hello.lines": ["Watt","Watt","Watt"],
   "say_hello.compress": true
 }

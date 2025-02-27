@@ -50,6 +50,8 @@ The workflow_name and test_name can be used separately or together to filter whi
 The `path` points to the WDL to be run for the test, and the `test_inputs` are given to Cromwell to configure that run. The `expected_outputs` is what should match the Cromwell outputs JSON. You can set this field to `null` in the configuration to mean you expect the Cromwell job to fail for the given inputs to check e.g. error handling or edge cases in your workflow. 
 You can set an output in the `expected_outputs` json to `null` tell Watt not to compare that output.
 In this case, the test will still fail if the specified output is not produced by the workflow, but it will not check its value against anything.
+You can also tell a comparison to ignore certain lines in a particular output file by setting the expected output value in `expected_oputputs` to an object with keys `file` and `line_skip_regex`.
+Any line which matches the regex in the `line_skip_regex` field will be ignored in the comparison.
 
 Othewise, each key will have its value compared to the matching key in the other file. See [Interpreting the Results](#interpreting-the-results) below for the different types of test outcomes that can happen. 
 
