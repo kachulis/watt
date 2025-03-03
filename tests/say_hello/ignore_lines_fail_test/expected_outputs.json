@@ -1,0 +1,6 @@
+{
+  "say_hello.announcement": {
+    "file": "tests/say_hello/ignore_lines_fail_test/announcement.txt",
+    "line_skip_regex": "shouldn't|won't"
+  }
+}

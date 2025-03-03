@@ -1,0 +1,6 @@
+{
+  "say_hello.lines": ["This line should be in the output file.",
+                      "This one won't be in the expected output though",
+                      "But this one will."],
+  "say_hello.compress": false
+}

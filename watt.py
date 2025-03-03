@@ -1,4 +1,5 @@
 import argparse
+import re
 import sys
 import os
 import subprocess
@@ -171,7 +172,7 @@ class CompareOutputs:
         blob = bucket.blob(blob_str)
         blob.download_to_filename(tmp_file_name)
 
-    def match(self, x, y) -> int:
+    def match(self, x, y, line_skip_regex_str: str = None) -> int:
         """
         Performs a comparison against two values from an output JSON. Uses recursion to handle nested Array types, and
         infers File types from attempting to read strings as file first. If that fails, then compare raw values.
@@ -195,39 +196,55 @@ class CompareOutputs:
         elif isinstance(x, list) or isinstance(y, list):
             # This means at some level of nesting one is Array and the other is not, so the tensors have different shapes
             return ComparisonResult.ArrayShapeMismatch
-        else:
+        elif isinstance(x, str) and isinstance(y, str):
             # Attempt to resolve strings as paths, and if so compare file contents
-            if isinstance(x, str) and isinstance(y, str):
-                # check if either file is from google bucket
-                if x.startswith("gs://"):
-                    with tempfile.NamedTemporaryFile() as temp_x:
-                        self.download_gcs_blob_to_tmp_file(x, temp_x.name)
-                        return self.match(temp_x.name, y)
-                if y.startswith("gs://"):
-                    with tempfile.NamedTemporaryFile() as temp_y:
-                        self.download_gcs_blob_to_tmp_file(y, temp_y.name)
-                        return self.match(x, temp_y.name)
-                if os.path.exists(x) and os.path.exists(y):
-                    try:
-                        with gzip.open(x, 'r') as x_file, gzip.open(y, 'r') as y_file:
+            # check if either file is from google bucket
+            if x.startswith("gs://"):
+                with tempfile.NamedTemporaryFile() as temp_x:
+                    self.download_gcs_blob_to_tmp_file(x, temp_x.name)
+                    return self.match(temp_x.name, y)
+            if y.startswith("gs://"):
+                with tempfile.NamedTemporaryFile() as temp_y:
+                    self.download_gcs_blob_to_tmp_file(y, temp_y.name)
+                    return self.match(x, temp_y.name)
+            if os.path.exists(x) and os.path.exists(y):
+                try:
+                    with gzip.open(x, 'r') as x_file, gzip.open(y, 'r') as y_file:
+                        if line_skip_regex_str:
+                            line_skip_regex = re.compile(line_skip_regex_str)
+                            x_contents = [line for line in x_file if not line_skip_regex.search(line.decode())]
+                            y_contents = [line for line in y_file if not line_skip_regex.search(line.decode())]
+                        else:
                             x_contents = x_file.read()
                             y_contents = y_file.read()
+                        if x_contents == y_contents:
+                            return ComparisonResult.Match
+                        else:
+                            return ComparisonResult.Mismatch
+                except gzip.BadGzipFile:
+                    if line_skip_regex_str:
+                        line_skip_regex = re.compile(line_skip_regex_str)
+                        with open(x, 'r') as x_file, open(y, 'r') as y_file:
+                            x_contents = [line for line in x_file if not line_skip_regex.search(line)]
+                            y_contents = [line for line in y_file if not line_skip_regex.search(line)]
                             if x_contents == y_contents:
                                 return ComparisonResult.Match
                             else:
                                 return ComparisonResult.Mismatch
-                    except gzip.BadGzipFile:
-                        if filecmp.cmp(x, y, shallow=False):
-                            return ComparisonResult.Match
-                        else:
-                            return ComparisonResult.Mismatch
-                elif os.path.exists(x) or os.path.exists(y):
-                    return ComparisonResult.FileTypeMismatch
-                else:
-                    return ComparisonResult.Match if x == y else ComparisonResult.Mismatch
+                    elif filecmp.cmp(x, y, shallow=False):
+                        return ComparisonResult.Match
+                    else:
+                        return ComparisonResult.Mismatch
+            elif os.path.exists(x) or os.path.exists(y):
+                return ComparisonResult.FileTypeMismatch
             else:
-                # If not file or array, just compare the raw values
                 return ComparisonResult.Match if x == y else ComparisonResult.Mismatch
+        elif isinstance(x, dict) and isinstance(y, str):
+            if set(x.keys()) == {'file', 'line_skip_regex'}:
+                return self.match(x['file'], y, x['line_skip_regex'])
+        else:
+            # If not file or array, just compare the raw values
+            return ComparisonResult.Match if x == y else ComparisonResult.Mismatch
 
 
 @dataclass
