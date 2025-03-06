@@ -202,11 +202,11 @@ class CompareOutputs:
             if x.startswith("gs://"):
                 with tempfile.NamedTemporaryFile() as temp_x:
                     self.download_gcs_blob_to_tmp_file(x, temp_x.name)
-                    return self.match(temp_x.name, y)
+                    return self.match(temp_x.name, y, line_skip_regex_str)
             if y.startswith("gs://"):
                 with tempfile.NamedTemporaryFile() as temp_y:
                     self.download_gcs_blob_to_tmp_file(y, temp_y.name)
-                    return self.match(x, temp_y.name)
+                    return self.match(x, temp_y.name, line_skip_regex_str)
             if os.path.exists(x) and os.path.exists(y):
                 try:
                     with gzip.open(x, 'r') as x_file, gzip.open(y, 'r') as y_file:
