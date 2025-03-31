@@ -172,6 +172,26 @@ class CompareOutputs:
         blob = bucket.blob(blob_str)
         blob.download_to_filename(tmp_file_name)
 
+    @staticmethod
+    def read_in_chunks(file_object, chunk_size=1024*1024):
+        while True:
+            data = file_object.read(chunk_size)
+            if not data:
+                break
+            yield data
+
+    @staticmethod
+    def compare_files(file1, file2, line_skip_regex_str: str = None) -> int:
+        if line_skip_regex_str:
+            line_skip_regex = re.compile(line_skip_regex_str)
+        for chunk1, chunk2 in zip(CompareOutputs.read_in_chunks(file1), CompareOutputs.read_in_chunks(file2)):
+            if line_skip_regex_str:
+                chunk1 = [line for line in chunk1 if not line_skip_regex.search(line.decode())]
+                chunk2 = [line for line in chunk2 if not line_skip_regex.search(line.decode())]
+            if chunk1 != chunk2:
+                return ComparisonResult.Mismatch
+        return ComparisonResult.Match
+
     def match(self, x, y, line_skip_regex_str: str = None) -> int:
         """
         Performs a comparison against two values from an output JSON. Uses recursion to handle nested Array types, and
@@ -209,32 +229,11 @@ class CompareOutputs:
                     return self.match(x, temp_y.name, line_skip_regex_str)
             if os.path.exists(x) and os.path.exists(y):
                 try:
-                    with gzip.open(x, 'r') as x_file, gzip.open(y, 'r') as y_file:
-                        if line_skip_regex_str:
-                            line_skip_regex = re.compile(line_skip_regex_str)
-                            x_contents = [line for line in x_file if not line_skip_regex.search(line.decode())]
-                            y_contents = [line for line in y_file if not line_skip_regex.search(line.decode())]
-                        else:
-                            x_contents = x_file.read()
-                            y_contents = y_file.read()
-                        if x_contents == y_contents:
-                            return ComparisonResult.Match
-                        else:
-                            return ComparisonResult.Mismatch
+                    with gzip.open(x, 'rb') as x_file, gzip.open(y, 'rb') as y_file:
+                        return CompareOutputs.compare_files(x_file, y_file, line_skip_regex_str)
                 except gzip.BadGzipFile:
-                    if line_skip_regex_str:
-                        line_skip_regex = re.compile(line_skip_regex_str)
-                        with open(x, 'r') as x_file, open(y, 'r') as y_file:
-                            x_contents = [line for line in x_file if not line_skip_regex.search(line)]
-                            y_contents = [line for line in y_file if not line_skip_regex.search(line)]
-                            if x_contents == y_contents:
-                                return ComparisonResult.Match
-                            else:
-                                return ComparisonResult.Mismatch
-                    elif filecmp.cmp(x, y, shallow=False):
-                        return ComparisonResult.Match
-                    else:
-                        return ComparisonResult.Mismatch
+                    with open(x, 'r') as x_file, open(y, 'r') as y_file:
+                        return CompareOutputs.compare_files(x_file, y_file, line_skip_regex_str)
             elif os.path.exists(x) or os.path.exists(y):
                 return ComparisonResult.FileTypeMismatch
             else:
