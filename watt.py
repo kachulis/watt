@@ -186,8 +186,8 @@ class CompareOutputs:
             line_skip_regex = re.compile(line_skip_regex_str)
         for chunk1, chunk2 in zip(CompareOutputs.read_in_chunks(file1), CompareOutputs.read_in_chunks(file2)):
             if line_skip_regex_str:
-                chunk1 = [line for line in chunk1 if not line_skip_regex.search(line.decode())]
-                chunk2 = [line for line in chunk2 if not line_skip_regex.search(line.decode())]
+                chunk1 = [line for line in chunk1 if not line_skip_regex.search(line)]
+                chunk2 = [line for line in chunk2 if not line_skip_regex.search(line)]
             if chunk1 != chunk2:
                 return ComparisonResult.Mismatch
         return ComparisonResult.Match
@@ -229,7 +229,7 @@ class CompareOutputs:
                     return self.match(x, temp_y.name, line_skip_regex_str)
             if os.path.exists(x) and os.path.exists(y):
                 try:
-                    with gzip.open(x, 'rb') as x_file, gzip.open(y, 'rb') as y_file:
+                    with gzip.open(x, 'rt') as x_file, gzip.open(y, 'rt') as y_file:
                         return CompareOutputs.compare_files(x_file, y_file, line_skip_regex_str)
                 except gzip.BadGzipFile:
                     with open(x, 'r') as x_file, open(y, 'r') as y_file:
