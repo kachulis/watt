@@ -1,4 +1,5 @@
 import argparse
+import io
 import re
 import sys
 import os
@@ -175,17 +176,18 @@ class CompareOutputs:
     @staticmethod
     def read_in_chunks(file_object, chunk_size=1024*1024):
         while True:
-            data = file_object.read(chunk_size)
+            data = file_object.readlines(chunk_size)
             if not data:
                 break
             yield data
 
     @staticmethod
-    def compare_files(file1, file2, line_skip_regex_str: str = None) -> int:
+    def compare_files(file1: io.TextIOWrapper, file2: io.TextIOWrapper, line_skip_regex_str: str = None) -> int:
+        line_skip_regex = None
         if line_skip_regex_str:
             line_skip_regex = re.compile(line_skip_regex_str)
         for chunk1, chunk2 in zip(CompareOutputs.read_in_chunks(file1), CompareOutputs.read_in_chunks(file2)):
-            if line_skip_regex_str:
+            if line_skip_regex:
                 chunk1 = [line for line in chunk1 if not line_skip_regex.search(line)]
                 chunk2 = [line for line in chunk2 if not line_skip_regex.search(line)]
             if chunk1 != chunk2:
